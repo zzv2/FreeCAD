@@ -1,0 +1,58 @@
+{
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.rulers": [99],
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "isort.importStrategy": "fromEnvironment",
+  "black-formatter.importStrategy": "fromEnvironment",
+  "flake8.importStrategy": "fromEnvironment",
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.args": ["--strict", "--ignore-missing-imports", "--no-namespace-packages"],
+  "sql-formatter.dialect": "pl/sql",
+  "sql-formatter.uppercase": true,
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "[cmake]": {
+    "editor.defaultFormatter": "cheshirekow.cmake-format"
+  },
+  "[cpp]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  },
+  "[shellscript]": {
+    "editor.defaultFormatter": "mkhl.shfmt"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "files.associations": {
+    "*.urdf": "xml",
+    "*.srdf": "xml",
+    "*.xacro": "xml"
+  },
+  "cSpell.words": ["Gatlin"]
+}
