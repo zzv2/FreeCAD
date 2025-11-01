@@ -150,45 +150,55 @@ else:
         max_x = max(max_x, bbox.XMax)
         max_y = max(max_y, bbox.YMax)
 
-    print(f"  Bounding box: X=[{min_x}, {max_x}], Y=[{min_y}, {max_y}]")
+    # Add 5% padding
+    width = max_x - min_x
+    height = max_y - min_y
+    padding_x = width * 0.05
+    padding_y = height * 0.05
 
-    # Create base plate (half the height of the base extrusion)
+    min_x -= padding_x
+    min_y -= padding_y
+    max_x += padding_x
+    max_y += padding_y
+
+    print(f"  Bounds: X=[{min_x:.4f}, {max_x:.4f}], Y=[{min_y:.4f}, {max_y:.4f}]")
+    print(f"  Dimensions: {max_x - min_x:.4f} x {max_y - min_y:.4f} meters")
+
+    # Create base plate rectangle at half the height of level 0 faces
     base_height = extrude_height * 0.5
-    print(f"  Creating base plate with height {base_height}")
+    print(f"  Creating base plate with height {base_height} meters...")
 
-    base_wire = Part.makePolygon(
-        [
-            App.Vector(min_x, min_y, 0),
-            App.Vector(max_x, min_y, 0),
-            App.Vector(max_x, max_y, 0),
-            App.Vector(min_x, max_y, 0),
-            App.Vector(min_x, min_y, 0),
-        ]
-    )
+    # Create rectangle vertices
+    v1 = App.Vector(min_x, min_y, 0)
+    v2 = App.Vector(max_x, min_y, 0)
+    v3 = App.Vector(max_x, max_y, 0)
+    v4 = App.Vector(min_x, max_y, 0)
+
+    # Create edges
+    l1 = Part.LineSegment(v1, v2).toShape()
+    l2 = Part.LineSegment(v2, v3).toShape()
+    l3 = Part.LineSegment(v3, v4).toShape()
+    l4 = Part.LineSegment(v4, v1).toShape()
+
+    # Create wire and face
+    base_wire = Part.Wire([l1, l2, l3, l4])
     base_face = Part.Face(base_wire)
     base_solid = base_face.extrude(App.Vector(0, 0, base_height))
 
-    # Union all solids together with the base plate
-    print("\nPerforming union of all solids...")
-    try:
-        combined = base_solid
-        for i, solid_obj in enumerate(solids):
-            print(f"  Fusing solid {i+1}/{len(solids)}")
-            combined = combined.fuse(solid_obj.Shape)
+    base_obj = doc.addObject("Part::Feature", "BasePlate")
+    base_obj.Shape = base_solid
+    solids.insert(0, base_obj)  # Add at the beginning
+    print("  Created base plate")
 
-        fused_obj = doc.addObject("Part::Feature", "UnifiedPart")
-        fused_obj.Shape = combined
-        export_obj = fused_obj
-        print("  Union complete - all parts are now connected")
-    except Exception as e:
-        print(f"  Union failed: {e}, falling back to compound")
-        # Fallback to compound if union fails
-        all_shapes = [base_solid] + [o.Shape for o in solids]
-        fused = Part.makeCompound(all_shapes)
-        fused_obj = doc.addObject("Part::Feature", "CompoundParts")
+    # If multiple solids, you may fuse them
+    if len(solids) > 1:
+        fused = Part.makeCompound([o.Shape for o in solids])
+        fused_obj = doc.addObject("Part::Feature", "FusedSolids")
         fused_obj.Shape = fused
         export_obj = fused_obj
+    else:
+        export_obj = solids[0]
 
-    print(f"\nExporting STEP: {outfile}")
+    print(f"Exporting STEP: {outfile}")
     export_obj.Shape.exportStep(outfile)
     print("Done.")
