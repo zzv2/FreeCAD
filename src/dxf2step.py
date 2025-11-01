@@ -121,7 +121,7 @@ for i, face, wire in faces_and_wires:
     if level % 2 == 0:
         height = extrude_height
     else:
-        height = extrude_height * 1.5
+        height = extrude_height * 1.25
 
     try:
         solid = face.extrude(App.Vector(0, 0, height))
@@ -156,10 +156,13 @@ else:
     padding_x = width * 0.05
     padding_y = height * 0.05
 
-    min_x -= padding_x
-    min_y -= padding_y
-    max_x += padding_x
-    max_y += padding_y
+    # Use the max padding for both dimensions
+    padding = max(padding_x, padding_y)
+
+    min_x -= padding
+    min_y -= padding
+    max_x += padding
+    max_y += padding
 
     print(f"  Bounds: X=[{min_x:.4f}, {max_x:.4f}], Y=[{min_y:.4f}, {max_y:.4f}]")
     print(f"  Dimensions: {max_x - min_x:.4f} x {max_y - min_y:.4f} meters")
