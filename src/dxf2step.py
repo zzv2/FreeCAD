@@ -95,11 +95,11 @@ for i, face_i, wire_i in faces_and_wires:
 solids = []
 for i, face, wire in faces_and_wires:
     level = face_levels.get(i, 0)
-    # Alternate heights: even levels use base height, odd levels use half height
+    # Alternate heights: even levels use base height, odd levels use taller height
     if level % 2 == 0:
         height = extrude_height
     else:
-        height = extrude_height * 0.5
+        height = extrude_height * 1.5
 
     try:
         solid = face.extrude(App.Vector(0, 0, height))
