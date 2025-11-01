@@ -26,24 +26,49 @@ importDXF.insert(infile, doc.Name)
 
 doc.recompute()
 
-# Assume the imported objects are Draft/Sketch wires or shapes
-# Find all wire shapes, then extrude them
-solids = []
+# Collect all edges from imported objects
+all_edges = []
 for obj in doc.Objects:
-    if hasattr(obj, "Shape"):
-        shp = obj.Shape
-        # Choose only wires or faces to extrude
-        if shp.Faces:
-            # extrude faces into a solid
-            solid = Part.makePrism(shp, App.Vector(0, 0, extrude_height))
-            partobj = doc.addObject("Part::Feature", f"SolidFrom_{obj.Name}")
+    if hasattr(obj, "Shape") and obj.Shape.Edges:
+        all_edges.extend(obj.Shape.Edges)
+
+print(f"Collected {len(all_edges)} edges from DXF")
+
+# Try to create wires from the edges
+try:
+    print("Attempting to connect edges into wires...")
+    wires = Part.sortEdges(all_edges)
+    print(f"Created {len(wires)} wire groups")
+except Exception as e:
+    print(f"Error sorting edges: {e}")
+    wires = []
+
+# Create solids from wires
+solids = []
+for i, edge_list in enumerate(wires):
+    try:
+        # Create a wire from the edge list
+        wire = Part.Wire(edge_list)
+        print(f"Wire {i}: closed={wire.isClosed()}, {len(edge_list)} edges")
+
+        if wire.isClosed():
+            # Create face and extrude
+            face = Part.Face(wire)
+            solid = face.extrude(App.Vector(0, 0, extrude_height))
+            partobj = doc.addObject("Part::Feature", f"Solid_{i}")
             partobj.Shape = solid
             solids.append(partobj)
+            print(f"  Created solid from wire {i}")
+        else:
+            print(f"  Wire {i} is not closed, skipping")
+    except Exception as e:
+        print(f"  Failed to create solid from wire {i}: {e}")
 
 doc.recompute()
 
 if not solids:
     print("Warning: No faces found to extrude. Please check DXF content.")
+    sys.exit(1)
 else:
     # If multiple solids, you may fuse them
     if len(solids) > 1:
@@ -54,6 +79,6 @@ else:
     else:
         export_obj = solids[0]
 
-print(f"Exporting STEP: {outfile}")
-export_obj.Shape.exportStep(outfile)
-print("Done.")
+    print(f"Exporting STEP: {outfile}")
+    export_obj.Shape.exportStep(outfile)
+    print("Done.")
