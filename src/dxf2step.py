@@ -55,9 +55,31 @@ for i, edge_list in enumerate(wires):
     try:
         # Create a wire from the edge list
         wire = Part.Wire(edge_list)
-        print(f"Wire {i}: closed={wire.isClosed()}, {len(edge_list)} edges")
+        is_closed = wire.isClosed()
+        print(f"Wire {i}: closed={is_closed}, {len(edge_list)} edges")
 
-        if wire.isClosed():
+        # If not closed, check if it's nearly closed and try to fix it
+        if not is_closed:
+            # Get the start and end points
+            first_vertex = wire.Vertexes[0].Point
+            last_vertex = wire.Vertexes[-1].Point
+            gap_distance = first_vertex.distanceToPoint(last_vertex)
+            print(f"  Wire {i} gap distance: {gap_distance} meters")
+
+            # If the gap is small enough, try to close it
+            if gap_distance < 0.01:  # 1cm tolerance
+                print(f"  Attempting to close wire {i} by adding a closing edge...")
+                try:
+                    # Create a line segment to close the gap
+                    closing_edge = Part.LineSegment(last_vertex, first_vertex).toShape()
+                    closed_edges = edge_list + [closing_edge]
+                    wire = Part.Wire(closed_edges)
+                    is_closed = wire.isClosed()
+                    print(f"  Wire {i} after fix: closed={is_closed}")
+                except Exception as e:
+                    print(f"  Failed to close wire {i}: {e}")
+
+        if is_closed:
             # Create face
             face = Part.Face(wire)
             faces_and_wires.append((i, face, wire))
