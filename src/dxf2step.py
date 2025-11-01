@@ -138,15 +138,57 @@ if not solids:
     print("Warning: No faces found to extrude. Please check DXF content.")
     sys.exit(1)
 else:
-    # If multiple solids, you may fuse them
-    if len(solids) > 1:
-        fused = Part.makeCompound([o.Shape for o in solids])
-        fused_obj = doc.addObject("Part::Feature", "FusedSolids")
+    # Calculate bounding box for all faces
+    print("\nCalculating bounding box for base plate...")
+    min_x = min_y = float("inf")
+    max_x = max_y = float("-inf")
+
+    for i, face, wire in faces_and_wires:
+        bbox = face.BoundBox
+        min_x = min(min_x, bbox.XMin)
+        min_y = min(min_y, bbox.YMin)
+        max_x = max(max_x, bbox.XMax)
+        max_y = max(max_y, bbox.YMax)
+
+    print(f"  Bounding box: X=[{min_x}, {max_x}], Y=[{min_y}, {max_y}]")
+
+    # Create base plate (half the height of the base extrusion)
+    base_height = extrude_height * 0.5
+    print(f"  Creating base plate with height {base_height}")
+
+    base_wire = Part.makePolygon(
+        [
+            App.Vector(min_x, min_y, 0),
+            App.Vector(max_x, min_y, 0),
+            App.Vector(max_x, max_y, 0),
+            App.Vector(min_x, max_y, 0),
+            App.Vector(min_x, min_y, 0),
+        ]
+    )
+    base_face = Part.Face(base_wire)
+    base_solid = base_face.extrude(App.Vector(0, 0, base_height))
+
+    # Union all solids together with the base plate
+    print("\nPerforming union of all solids...")
+    try:
+        combined = base_solid
+        for i, solid_obj in enumerate(solids):
+            print(f"  Fusing solid {i+1}/{len(solids)}")
+            combined = combined.fuse(solid_obj.Shape)
+
+        fused_obj = doc.addObject("Part::Feature", "UnifiedPart")
+        fused_obj.Shape = combined
+        export_obj = fused_obj
+        print("  Union complete - all parts are now connected")
+    except Exception as e:
+        print(f"  Union failed: {e}, falling back to compound")
+        # Fallback to compound if union fails
+        all_shapes = [base_solid] + [o.Shape for o in solids]
+        fused = Part.makeCompound(all_shapes)
+        fused_obj = doc.addObject("Part::Feature", "CompoundParts")
         fused_obj.Shape = fused
         export_obj = fused_obj
-    else:
-        export_obj = solids[0]
 
-    print(f"Exporting STEP: {outfile}")
+    print(f"\nExporting STEP: {outfile}")
     export_obj.Shape.exportStep(outfile)
     print("Done.")
