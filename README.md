@@ -29,3 +29,9 @@ You can also specify a custom scale factor (default is 0.001):
 ```bash
 bash src/batch_step_to_stl.sh ~/Documents/CAD/STEP_to_STL 0.002
 ```
+
+### DXF to STEP
+
+```bash
+freecad.cmd --console "$(cat src/dxf2step.py)" --pass ~/Downloads/gatlin-logo-high-res-black-cropped-final.dxf ~/Downloads/gatlin-logo-high-res-black-cropped-final.step
+```
